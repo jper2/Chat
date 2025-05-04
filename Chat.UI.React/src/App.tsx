@@ -1,49 +1,97 @@
-import { useEffect, useState } from 'react';
-import MessageList from './components/MessageList';
-import MessageInput from './components/MessageInput';
-import { mockMessages } from './data/mockMessages';
-import { Message } from './types/Message';
-import './App.css';
-import { MessagesService } from './services/MessagesService';
+import { Routes, Route } from 'react-router-dom';
+import Navbar from './components/Navbar';
+import Chat from './components/chat';
+import Login from './components/login';
+import Register from './components/register';
 
 function App() {
-  const [messages, setMessages] = useState<Message[]>(mockMessages);
-  const messagesService = MessagesService.getInstance('https://localhost:7117/api');
-  useEffect(() => {
-
-    messagesService.fetchMessages()
-      .then((fetchedMessages) => {
-        setMessages(fetchedMessages);
-      });
-  }, []);
-
-  const handleSendMessage = (content: string) => {
-    const newMessage: Message = {
-      id: `${messages.length + 1}`,
-      type: 'text',
-      content,
-      isMine: true,
-    };
-    setMessages([...messages, newMessage]);
-  };
-
   return (
-    <div className="min-h-screen flex flex-col items-center px-4 py-6">
-      <div className="w-full max-w-2xl">
-        <MessageList messages={messages} />
-        <div className="h-20" />
-        {/* <div className="mt-4"> */}
-        <div className="sticky bottom-0 pt-4 z-10 shadow-t">
-          <MessageInput onSend={handleSendMessage} />
-        </div>
-
-        {/* </div> */}
-      </div>
+    <div className="min-h-screen flex flex-col">
+      <Navbar />
+      <Routes>
+        <Route path="/" element={<Chat />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+      </Routes>
     </div>
   );
 }
 
 export default App;
+// import { useEffect, useState } from 'react';
+// import MessageList from './components/MessageList';
+// import MessageInput from './components/MessageInput';
+// import { mockMessages } from './data/mockMessages';
+// import { Message } from './types/Message';
+// import './App.css';
+// import { MessagesService } from './services/MessagesService';
+// import Navbar from './components/Navbar';
+
+// function App() {
+//   const [messages, setMessages] = useState<Message[]>(mockMessages);
+//   const messagesService = MessagesService.getInstance('https://localhost:7117/api');
+
+//   useEffect(() => {
+//     messagesService.fetchMessages().then((fetchedMessages) => {
+//       setMessages(fetchedMessages);
+//     });
+//   }, []);
+
+//   const handleSendMessage = async (content: string) => {
+//     const newMessage: Message = {
+//       id: `${messages.length + 1}`,
+//       type: 'text',
+//       content,
+//       isMine: true,
+//     };
+//     try {
+//       // Send the message to the API
+//       const savedMessage = await messagesService.addMessage(newMessage);
+
+//       // Update the local state with the saved message from the API
+//       setMessages([...messages, savedMessage]);
+//     } catch (error) {
+//       //console.error('Failed to send message:', error.message);
+//       alert('Failed to send message. Please try again.');
+//     }
+//   };
+
+//   return (
+//     <div className="min-h-screen flex flex-col items-center px-4 py-6">
+//       <Navbar />
+//       <div className="w-full max-w-2xl">
+//         <MessageList messages={messages} />
+//         <div className="h-20" />
+//         {/* <div className="mt-4"> */}
+//         <div className="sticky bottom-0 pt-4 z-10 shadow-t">
+//           <MessageInput onSend={handleSendMessage} />
+//         </div>
+
+//         {/* </div> */}
+//       </div>
+//     </div>
+//   );
+// }
+
+// export default App;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // import { useEffect, useRef, useState } from 'react';
 // import { mockMessages } from './data/mockMessages';

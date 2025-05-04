@@ -2,6 +2,8 @@
 using Chat.Core.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 
 namespace Chat.API.Controllers
 {
@@ -45,15 +47,64 @@ namespace Chat.API.Controllers
                 return BadRequest(new { message = "Invalid input data." });
             }
 
-            var token = await _authService.LoginAsync(loginDto.Username, loginDto.Password);
-            if (string.IsNullOrEmpty(token.Token))
+            var loginResult = await _authService.LoginAsync(loginDto.Username, loginDto.Password);
+            if (string.IsNullOrEmpty(loginResult.Token))
             {
                 return Unauthorized(new { message = "Invalid username or password." });
             }
 
-            return Ok(new { token });
+            return Ok(loginResult);
         }
 
+        [HttpGet("refresh")]
+        [Authorize]
+        public IActionResult RefreshToken()
+        {
+            // Get the token from the Authorization header
+            var authHeader = Request.Headers["Authorization"].ToString();
+            
+            if (string.IsNullOrEmpty(authHeader) || !authHeader.StartsWith("Bearer "))
+            {
+                return Unauthorized(new { message = "Authorization header is missing or invalid." });
+            }
+
+            // Extract the token (remove "Bearer " prefix)
+            var token = authHeader.Substring("Bearer ".Length).Trim();
+
+            //var userName = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Name)?.Value;
+            //var userName = User.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Sub)?.Value;
+            var userName = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+
+
+
+
+
+
+            var newToken = _authService.RefreshTokenAsync(userName);
+            if (newToken == null)
+            {
+                return Unauthorized(new { message = "Invalid or expired token." });
+            }
+
+            return Ok(new { token = newToken });
+
+
+
+
+
+
+
+
+
+
+            //var newToken = _authService.RefreshToken(token);
+            //if (newToken == null)
+            //{
+            //    return Unauthorized(new { message = "Invalid or expired token." });
+            //}
+
+            //return Ok(new { token = newToken });
+        }
         //// GET: api/users/me
         //[HttpGet("me")]
         //[Authorize]

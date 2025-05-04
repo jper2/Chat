@@ -2,6 +2,7 @@
 using Chat.Core.Repositories;
 using Chat.Core.Utilities;
 using Microsoft.Extensions.Options;
+using System.IdentityModel.Tokens.Jwt;
 
 namespace Chat.Core.Services
 {
@@ -53,6 +54,27 @@ namespace Chat.Core.Services
             return new AuthResult { Success = true, Token = token };
         }
 
+        public async Task<AuthResult> RefreshTokenAsync(string token)
+        {
+            var result = new AuthResult { Success = false, Message = "Invalid token." };
+            try
+            {
+                ////extract userName from token
+                //var handler = new JwtSecurityTokenHandler();
+                //var jwtToken = handler.ReadJwtToken(token);
+                var userName = token;// jwtToken.Claims.First(claim => claim.Type == JwtRegisteredClaimNames.Sub).Value;
+                var user = await _authRepository.GetByUsernameAsync(userName);
+                if (user != null)
+                {
+                    var newToken = JwtHelper.GenerateJwtToken(user, _jwtSettings);
+                    return new AuthResult { Success = true, Token = newToken };
+                }
+            }
+            catch (Exception ex)
+            {
+                return new AuthResult { Success = false, Message = "Invalid token." };
+            }
+            return new AuthResult { Success = false, Message = "Invalid token." };
+        }
     }
-
 }

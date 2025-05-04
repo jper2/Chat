@@ -40,3 +40,32 @@
 .read-the-docs {
   color: #888;
 }
+
+.message-item {
+  position: relative; /* Ensure the delete button is positioned relative to this container */
+  margin-bottom: 10px;
+  padding: 10px; /* Adjust padding to avoid overlapping */
+  border-radius: 8px;
+  background-color: #f9f9f9;
+}
+
+.delete-button {
+  position: absolute;
+  top: 5px; /* Position the button at the top */
+  right: 5px; /* Position the button at the right */
+  background: none;
+  border: none;
+  color: #aaa; /* Slightly lighter color for less visual weight */
+  cursor: pointer;
+  font-size: 12px; /* Reduce font size for a more subtle look */
+  padding: 4px; /* Slightly increase padding for better clickability */
+  border-radius: 50%;
+  line-height: 1;
+  transition: color 0.2s ease, background-color 0.2s ease, transform 0.2s ease;
+}
+
+.delete-button:hover {
+  color: #e63946; /* Use a softer red for hover */
+  background-color: rgba(230, 57, 70, 0.1); /* Subtle background on hover */
+  transform: scale(1.1); /* Slightly enlarge the button on hover */
+}

@@ -4,6 +4,7 @@ import remarkGfm from 'remark-gfm';
 
 interface Props {
   markdown: string;
+  onDelete: () => void; // Callback for delete action
 }
 
 const TableMessage: React.FC<Props> = ({ markdown }) => {

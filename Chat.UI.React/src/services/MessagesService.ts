@@ -1,23 +1,37 @@
+// filepath: c:\Users\jpereira\source\repos\Chat\Chat.UI.React\src\services\MessagesService.ts
 import axios from 'axios';
 import { Message } from '../types/Message';
-// Removed unnecessary import as AxiosInstance is directly accessible from axios
+import { UsersService } from './UsersService';
 
 export class MessagesService {
     private static instance: MessagesService;
     private client: Axios.AxiosInstance;
 
-    private constructor(baseURL: string) {
+    private constructor() {
+        const baseURL: string = import.meta.env.VITE_API_BASE_URL;
+        const usersService = UsersService.getInstance();
         this.client = axios.create({
             baseURL,
             headers: {
                 'Content-Type': 'application/json',
             },
         });
+
+        // Add a request interceptor to dynamically include the token
+        this.client.interceptors.request.use((config) => {
+            const token = usersService.getToken();
+            console.log('Get Token:', token); // Debugging
+            if (token) {
+                config.headers = config.headers || {};
+                config.headers['Authorization'] = `Bearer ${token}`;
+            }
+            return config;
+        });
     }
 
-    public static getInstance(baseURL: string): MessagesService {
+    public static getInstance(): MessagesService {
         if (!MessagesService.instance) {
-            MessagesService.instance = new MessagesService(baseURL);
+            MessagesService.instance = new MessagesService();
         }
         return MessagesService.instance;
     }
@@ -25,7 +39,7 @@ export class MessagesService {
     async fetchMessages(): Promise<Message[]> {
         try {
             const response = await this.client.get('/messages');
-            return response.data  as Message[]; // Assuming the API returns { data: [...] }
+            return response.data as Message[];
         } catch (error: any) {
             throw new Error(error.response?.data?.message || 'Failed to fetch messages');
         }
@@ -33,8 +47,16 @@ export class MessagesService {
 
     async addMessage(message: Message): Promise<Message> {
         try {
-            const response = await this.client.post('/messages', message);
-            return response.data as Message; // Assuming the API returns { data: {...} }
+            const msgToSend: Message = {
+                id: '',
+                content: message.content,
+                type: message.type,
+                createdAt: new Date(), // Default to current date if not provided
+                userId: '', // Ensure this is set
+                metadata: {}, // Default to an empty object if not provided
+            };
+            const response = await this.client.post('/messages', msgToSend);
+            return response.data as Message;
         } catch (error: any) {
             throw new Error(error.response?.data?.message || 'Failed to add message');
         }
@@ -42,7 +64,7 @@ export class MessagesService {
 
     async deleteMessage(id: string): Promise<void> {
         try {
-            await this.client.delete(`/data/${id}`);
+            await this.client.delete(`/messages/${id}`);
         } catch (error: any) {
             throw new Error(error.response?.data?.message || 'Failed to delete message');
         }

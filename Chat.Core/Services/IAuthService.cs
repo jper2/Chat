@@ -7,6 +7,6 @@ namespace Chat.Core.Services
     {
         Task<AuthResult> RegisterAsync(UserCredentialsDto userRegisterDto);
         Task<AuthResult> LoginAsync(string username, string password);
-
+        Task<AuthResult> RefreshTokenAsync(string token);
     }
 }
