@@ -1,6 +1,7 @@
 ﻿using Chat.Core.Models;
 using Chat.Core.Repositories;
 using Chat.Core.Utilities;
+using Microsoft.Extensions.Options;
 
 namespace Chat.Core.Services
 {
@@ -9,13 +10,13 @@ namespace Chat.Core.Services
         private readonly IAuthRepository _authRepository;
         private readonly JwtSettings _jwtSettings;
 
-        public AuthService(IAuthRepository authRepository, JwtSettings jwtSettings)
+        public AuthService(IAuthRepository authRepository, IOptions<JwtSettings> jwtSettings)
         {
             _authRepository = authRepository;
-            _jwtSettings = jwtSettings;
+            _jwtSettings = jwtSettings.Value;
         }
 
-        public async Task<AuthResult> Register(UserCredentialsDto userRegisterDto)
+        public async Task<AuthResult> RegisterAsync(UserCredentialsDto userRegisterDto)
         {
             var existingUser = await _authRepository.GetByUsernameAsync(userRegisterDto.Username);
             if (existingUser != null)
@@ -29,7 +30,6 @@ namespace Chat.Core.Services
                 Username = userRegisterDto.Username,
                 PasswordHash = hash,
                 Salt = salt,
-                Roles = new List<string> { "User" },
                 CreatedAt = DateTime.UtcNow
             };
 
@@ -37,8 +37,12 @@ namespace Chat.Core.Services
             return new AuthResult { Success = true, Message = "User registered successfully." };
         }
 
-        public async Task<AuthResult> Login(string username, string password)
+        public async Task<AuthResult> LoginAsync(string username, string password)
         {
+            if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
+            {
+                throw new ArgumentException("Username and password must not be empty.");
+            }
             var user = await _authRepository.GetByUsernameAsync(username);
             if (user == null || !PasswordHasher.VerifyHash(password, user.PasswordHash, user.Salt))
             {

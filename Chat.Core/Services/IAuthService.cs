@@ -5,8 +5,8 @@ namespace Chat.Core.Services
 {
     public interface IAuthService
     {
-        Task<AuthResult> Register(UserCredentialsDto userRegisterDto);
-        Task<AuthResult> Login(string username, string password);
+        Task<AuthResult> RegisterAsync(UserCredentialsDto userRegisterDto);
+        Task<AuthResult> LoginAsync(string username, string password);
 
     }
 }

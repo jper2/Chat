@@ -4,9 +4,18 @@ import MessageInput from './components/MessageInput';
 import { mockMessages } from './data/mockMessages';
 import { Message } from './types/Message';
 import './App.css';
+import { MessagesService } from './services/MessagesService';
 
 function App() {
   const [messages, setMessages] = useState<Message[]>(mockMessages);
+  const messagesService = MessagesService.getInstance('https://localhost:7117/api');
+  useEffect(() => {
+
+    messagesService.fetchMessages()
+      .then((fetchedMessages) => {
+        setMessages(fetchedMessages);
+      });
+  }, []);
 
   const handleSendMessage = (content: string) => {
     const newMessage: Message = {

@@ -1,3 +1,4 @@
+using Chat.Core.Middleware;
 using Chat.Core.Models;
 using Chat.Core.Repositories;
 using Chat.Core.Services;
@@ -5,10 +6,21 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using MongoDB.Driver;
+using Serilog;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Configure Serilog
+Log.Logger = new LoggerConfiguration()
+    .ReadFrom.Configuration(builder.Configuration)
+    .Enrich.FromLogContext()
+    .WriteTo.Console() 
+    .WriteTo.File("Logs/log-.txt", rollingInterval: RollingInterval.Day)
+    .CreateLogger();
+
+builder.Host.UseSerilog();
+Log.Information("Starting Chat API...");
 // Add services to the container.
 
 builder.Services.AddControllers();
@@ -20,6 +32,8 @@ builder.Services.AddSwaggerGen();
 // MongoDB Configuration
 builder.Services.Configure<MongoDbSettings>(
     builder.Configuration.GetSection("MongoDb"));
+builder.Services.AddSingleton<IMongoDbSettings>(sp =>
+    sp.GetRequiredService<IOptions<MongoDbSettings>>().Value);
 builder.Services.AddSingleton<IMongoClient, MongoClient>(sp =>
 {
     var settings = sp.GetRequiredService<IOptions<MongoDbSettings>>().Value;
@@ -69,6 +83,8 @@ if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
+
+//app.UseMiddleware<ErrorHandlingMiddleware>();
 
 app.UseHttpsRedirection();
 
