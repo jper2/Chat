@@ -176,7 +176,7 @@ The application supports multiple types of messages:
 - **Delete Messages**: Users can delete their own messages. Deleted messages are removed from the chat in real-time.
 
 ### **4. Authentication**
-- Users must log in to access the chat.
+- Users must log in to chat.
 - The application uses JWT-based authentication to identify users.
 - Logged-in users can see their username displayed in the navigation bar.
 
