@@ -18,10 +18,14 @@ const Chat = () => {
   useEffect(() => {
     const fetchMessages = async () => {
       try {
-        // const fetched = await messagesService.fetchMessages();
-        // setMessages(fetched);
         const fetchedMessages = await messagesService.fetchMessages();
-        setMessages((prevMessages) => [...prevMessages, ...fetchedMessages]); // Append fetched messages
+        setMessages((prevMessages) => {
+          const allMessages = [...prevMessages, ...fetchedMessages];
+          const uniqueMessages = Array.from(
+            new Map(allMessages.map((msg) => [msg.id, msg])).values()
+          );
+          return uniqueMessages;
+        });
       } catch (error) {
         console.error('Failed to fetch messages:', error);
         if (!toast.isActive('fetchError')) {

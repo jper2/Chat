@@ -1,3 +1,4 @@
+using Chat.Core.Hubs;
 using Chat.Core.Middleware;
 using Chat.Core.Models;
 using Chat.Core.Repositories;
@@ -132,6 +133,10 @@ app.UseAuthorization();
 
 // Map SignalR hubs
 app.MapHub<Chat.Core.Hubs.ChatHub>("/hubs/chat");
+//app.UseEndpoints(endpoints =>
+//{
+//    endpoints.MapHub<ChatHub>("/chatHub").AllowAnonymous();
+//});
 
 // Map API controllers
 app.MapControllers();
