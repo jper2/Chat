@@ -2,8 +2,6 @@
 
 # Chat - Demo
 
-
-```markdown
 # Chat Application
 
 A real-time chat application built with **.NET 9**, **SignalR**, **MongoDB**, and **JWT Authentication**. This application supports user authentication, real-time messaging, and message management.
