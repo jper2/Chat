@@ -2,7 +2,7 @@ import { useAuth } from './context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
 const Navbar = () => {
-  const { isAuthenticated, logout } = useAuth();
+  const { isAuthenticated, logout,currentUsername } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -12,11 +12,11 @@ const Navbar = () => {
 
   return (
     <header className="bg-gray-800 text-white p-4 flex justify-between items-center">
-      <h1 className="text-xl font-bold">Chat App</h1>
+      <h1 className="text-xl font-bold">Chat - Demo App</h1>
       <div>
         {isAuthenticated ? (
           <>
-            <span className="mr-4">Logged in</span>
+            <span className="mr-4">Hello {currentUsername}</span>
             <button
               onClick={handleLogout}
               className="bg-red-500 px-4 py-2 rounded hover:bg-red-600"

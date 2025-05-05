@@ -9,11 +9,11 @@ using System.Threading.Tasks;
 
 namespace Chat.Core.Repositories
 {
-    public class MongoMessageRepository : IMessageRepository
+    public class MongoDBMessageRepository : IMessageRepository
     {
         private readonly IMongoCollection<Message> _messages;
 
-        public MongoMessageRepository(IMongoClient client, IOptions<MongoDbSettings> settings)
+        public MongoDBMessageRepository(IMongoClient client, IOptions<MongoDbSettings> settings)
         {
             var database = client.GetDatabase(settings.Value.DatabaseName);
             _messages = database.GetCollection<Message>("Messages");

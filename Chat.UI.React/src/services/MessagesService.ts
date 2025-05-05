@@ -20,7 +20,6 @@ export class MessagesService {
         // Add a request interceptor to dynamically include the token
         this.client.interceptors.request.use((config) => {
             const token = usersService.getToken();
-            console.log('Get Token:', token); // Debugging
             if (token) {
                 config.headers = config.headers || {};
                 config.headers['Authorization'] = `Bearer ${token}`;
@@ -38,7 +37,7 @@ export class MessagesService {
 
     async fetchMessages(): Promise<Message[]> {
         try {
-            const response = await this.client.get('/messages');
+            const response = await this.client.get('/api/messages');
             return response.data as Message[];
         } catch (error: any) {
             throw new Error(error.response?.data?.message || 'Failed to fetch messages');
@@ -47,15 +46,14 @@ export class MessagesService {
 
     async addMessage(message: Message): Promise<Message> {
         try {
-            const msgToSend: Message = {
-                id: '',
+            const msgToSend = {
+                //id: '',
                 content: message.content,
                 type: message.type,
-                createdAt: new Date(), // Default to current date if not provided
-                userId: '', // Ensure this is set
+                userId: '21', // Ensure this is set
                 metadata: {}, // Default to an empty object if not provided
             };
-            const response = await this.client.post('/messages', msgToSend);
+            const response = await this.client.post('/api/messages', msgToSend);
             return response.data as Message;
         } catch (error: any) {
             throw new Error(error.response?.data?.message || 'Failed to add message');
@@ -64,7 +62,7 @@ export class MessagesService {
 
     async deleteMessage(id: string): Promise<void> {
         try {
-            await this.client.delete(`/messages/${id}`);
+            await this.client.delete(`/api/messages/${id}`);
         } catch (error: any) {
             throw new Error(error.response?.data?.message || 'Failed to delete message');
         }

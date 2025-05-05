@@ -2,7 +2,7 @@
 
 namespace Chat.Core.Repositories
 {
-    public interface IAuthRepository
+    public interface IUsersRepository
     {
         Task<User> GetByUsernameAsync(string username);
         Task CreateUserAsync(User user);

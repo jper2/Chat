@@ -6,20 +6,20 @@ using System.IdentityModel.Tokens.Jwt;
 
 namespace Chat.Core.Services
 {
-    public class AuthService : IAuthService
+    public class UsersService : IUsersService
     {
-        private readonly IAuthRepository _authRepository;
+        private readonly IUsersRepository _usersRepository;
         private readonly JwtSettings _jwtSettings;
 
-        public AuthService(IAuthRepository authRepository, IOptions<JwtSettings> jwtSettings)
+        public UsersService(IUsersRepository authRepository, IOptions<JwtSettings> jwtSettings)
         {
-            _authRepository = authRepository;
+            _usersRepository = authRepository;
             _jwtSettings = jwtSettings.Value;
         }
 
         public async Task<AuthResult> RegisterAsync(UserCredentialsDto userRegisterDto)
         {
-            var existingUser = await _authRepository.GetByUsernameAsync(userRegisterDto.Username);
+            var existingUser = await _usersRepository.GetByUsernameAsync(userRegisterDto.Username);
             if (existingUser != null)
             {
                 return new AuthResult { Success = false, Message = "User already exists." };
@@ -34,7 +34,7 @@ namespace Chat.Core.Services
                 CreatedAt = DateTime.UtcNow
             };
 
-            await _authRepository.CreateUserAsync(newUser);
+            await _usersRepository.CreateUserAsync(newUser);
             return new AuthResult { Success = true, Message = "User registered successfully." };
         }
 
@@ -44,7 +44,7 @@ namespace Chat.Core.Services
             {
                 throw new ArgumentException("Username and password must not be empty.");
             }
-            var user = await _authRepository.GetByUsernameAsync(username);
+            var user = await _usersRepository.GetByUsernameAsync(username);
             if (user == null || !PasswordHasher.VerifyHash(password, user.PasswordHash, user.Salt))
             {
                 return new AuthResult { Success = false, Message = "Invalid username or password." };
@@ -54,16 +54,12 @@ namespace Chat.Core.Services
             return new AuthResult { Success = true, Token = token };
         }
 
-        public async Task<AuthResult> RefreshTokenAsync(string token)
+        public async Task<AuthResult> RefreshTokenAsync(string userName)
         {
             var result = new AuthResult { Success = false, Message = "Invalid token." };
             try
             {
-                ////extract userName from token
-                //var handler = new JwtSecurityTokenHandler();
-                //var jwtToken = handler.ReadJwtToken(token);
-                var userName = token;// jwtToken.Claims.First(claim => claim.Type == JwtRegisteredClaimNames.Sub).Value;
-                var user = await _authRepository.GetByUsernameAsync(userName);
+                var user = await _usersRepository.GetByUsernameAsync(userName);
                 if (user != null)
                 {
                     var newToken = JwtHelper.GenerateJwtToken(user, _jwtSettings);
@@ -72,9 +68,18 @@ namespace Chat.Core.Services
             }
             catch (Exception ex)
             {
-                return new AuthResult { Success = false, Message = "Invalid token." };
+                //Log the exception
             }
             return new AuthResult { Success = false, Message = "Invalid token." };
+        }
+
+        public async Task<User> GetByUserNameAsync(string userName)
+        {
+            if (string.IsNullOrWhiteSpace(userName))
+            {
+                throw new ArgumentException("User ID must not be empty.");
+            }
+            return await _usersRepository.GetByUsernameAsync(userName.ToLower());
         }
     }
 }

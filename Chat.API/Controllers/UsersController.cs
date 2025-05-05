@@ -11,9 +11,9 @@ namespace Chat.API.Controllers
     [Route("api/users")]
     public class UsersController : ControllerBase
     {
-        private readonly IAuthService _authService;
+        private readonly IUsersService _authService;
 
-        public UsersController(IAuthService authService)
+        public UsersController(IUsersService authService)
         {
             _authService = authService;
         }
@@ -58,72 +58,18 @@ namespace Chat.API.Controllers
 
         [HttpGet("refresh")]
         [Authorize]
-        public IActionResult RefreshToken()
+        public async Task<IActionResult> RefreshToken()
         {
-            // Get the token from the Authorization header
-            var authHeader = Request.Headers["Authorization"].ToString();
-            
-            if (string.IsNullOrEmpty(authHeader) || !authHeader.StartsWith("Bearer "))
-            {
-                return Unauthorized(new { message = "Authorization header is missing or invalid." });
-            }
-
-            // Extract the token (remove "Bearer " prefix)
-            var token = authHeader.Substring("Bearer ".Length).Trim();
-
-            //var userName = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Name)?.Value;
-            //var userName = User.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Sub)?.Value;
             var userName = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
 
-
-
-
-
-
-            var newToken = _authService.RefreshTokenAsync(userName);
-            if (newToken == null)
+            var refreshTokenResult = await _authService.RefreshTokenAsync(userName);
+            if (refreshTokenResult.Success)
             {
-                return Unauthorized(new { message = "Invalid or expired token." });
+                return Ok(refreshTokenResult);
             }
-
-            return Ok(new { token = newToken });
-
-
-
-
-
-
-
-
-
-
-            //var newToken = _authService.RefreshToken(token);
-            //if (newToken == null)
-            //{
-            //    return Unauthorized(new { message = "Invalid or expired token." });
-            //}
-
-            //return Ok(new { token = newToken });
+            return Unauthorized(refreshTokenResult);
         }
-        //// GET: api/users/me
-        //[HttpGet("me")]
-        //[Authorize]
-        //public async Task<IActionResult> GetCurrentUser()
-        //{
-        //    var userId = User.Identity?.Name;
-        //    if (string.IsNullOrEmpty(userId))
-        //    {
-        //        return Unauthorized(new { message = "User not authenticated." });
-        //    }
-
-        //    var user = await _authService.GetUserByIdAsync(userId);
-        //    if (user == null)
-        //    {
-        //        return NotFound(new { message = "User not found." });
-        //    }
-
-        //    return Ok(user);
-        //}
+       
     }
 }
 

@@ -1,15 +1,17 @@
-import React, { createContext, useState, useContext, ReactNode, useEffect, useRef } from 'react';
+import { createContext, useState, useContext, ReactNode, useEffect, useRef } from 'react';
 import { UsersService } from '../../services/UsersService';
 import {jwtDecode} from 'jwt-decode';
 
 interface DecodedToken {
     exp: number; // expiration time
     userId: string; // userId
+    sub: string; // username (new field)
 }
 
 interface AuthContextType {
     token: string | null;
     currentUserId: string | null;
+    currentUsername: string | null; 
     login: (username: string, password: string) => Promise<void>;
     logout: () => void;
     isAuthenticated: boolean;
@@ -21,25 +23,28 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const [token, setToken] = useState<string | null>(null);
     const [userId, setUserId] = useState<string | null>(null);
-    const renewalTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null); // Ref to store the timer ID
+    const [username, setUsername] = useState<string | null>(null);
+    const renewalTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-    // Decode the token and set the userId
     useEffect(() => {
-        if (token) {
-            const decoded: DecodedToken = jwtDecode(token);
+        const usersService = UsersService.getInstance();
+        const storedToken = usersService.getToken();
+        if (storedToken) {
+            setToken(storedToken);
+            const decoded: DecodedToken = jwtDecode(storedToken);
             setUserId(decoded.userId);
             scheduleTokenRenewal(decoded.exp);
         }
-    }, [token]);
+    }, []);
 
     const login = async (username: string, password: string) => {
         const usersService = UsersService.getInstance();
         const { token } = await usersService.loginUser({ username, password });
         setToken(token);
-        localStorage.setItem('authToken', token); // Persist token
 
         const decoded: DecodedToken = jwtDecode(token);
         setUserId(decoded.userId);
+        setUsername(decoded.sub);
         scheduleTokenRenewal(decoded.exp);
     };
 
@@ -48,9 +53,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         usersService.clearToken();
         setToken(null);
         setUserId(null);
-        localStorage.removeItem('authToken');
+        setUsername(null);
 
-        // Clear the renewal timer on logout
         if (renewalTimerRef.current) {
             clearTimeout(renewalTimerRef.current);
             renewalTimerRef.current = null;
@@ -63,11 +67,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const scheduleTokenRenewal = (exp: number) => {
-        const currentTime = Math.floor(Date.now() / 1000); // Current time in seconds
+        const currentTime = Math.floor(Date.now() / 1000);
         const timeUntilExpiration = exp - currentTime;
-        const renewalTime = timeUntilExpiration - 300; // Renew 5 minutes before expiration
+        const renewalTime = timeUntilExpiration - 300;
 
-        // Clear any existing timer before setting a new one
         if (renewalTimerRef.current) {
             clearTimeout(renewalTimerRef.current);
         }
@@ -76,25 +79,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             renewalTimerRef.current = setTimeout(async () => {
                 try {
                     const usersService = UsersService.getInstance();
-                    const { token: newToken } = await usersService.refreshToken(); // Call the refresh endpoint
+                    const { token: newToken } = await usersService.refreshToken();
                     setToken(newToken);
-                    localStorage.setItem('authToken', newToken);
 
                     const decoded: DecodedToken = jwtDecode(newToken);
                     setUserId(decoded.userId);
-                    scheduleTokenRenewal(decoded.exp); // Schedule the next renewal
+                    setUsername(decoded.sub);
+                    scheduleTokenRenewal(decoded.exp);
                 } catch (error) {
                     console.error('Failed to renew token:', error);
-                    logout(); // Log out if token renewal fails
+                    logout();
                 }
-            }, renewalTime * 1000); // Convert to milliseconds
+            }, renewalTime * 1000);
         }
     };
 
     const isAuthenticated = !!token;
 
     return (
-        <AuthContext.Provider value={{ token, login, logout, isAuthenticated, register, currentUserId: userId }}>
+        <AuthContext.Provider value={{ token, login, logout, isAuthenticated, register, currentUserId: userId, currentUsername: username,  }}>
             {children}
         </AuthContext.Provider>
     );

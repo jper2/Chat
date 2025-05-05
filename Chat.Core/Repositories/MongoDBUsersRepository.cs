@@ -3,11 +3,11 @@ using MongoDB.Driver;
 
 namespace Chat.Core.Repositories
 {
-    public class MongoAuthRepository : IAuthRepository
+    public class MongoDBUsersRepository : IUsersRepository
     {
         private readonly IMongoCollection<User> _users;
 
-        public MongoAuthRepository(IMongoDbSettings settings)
+        public MongoDBUsersRepository(IMongoDbSettings settings)
         {
             try
             {
@@ -25,7 +25,7 @@ namespace Chat.Core.Repositories
         {
             try
             {
-                return await _users.Find(u => u.Username == username).FirstOrDefaultAsync();
+                return await _users.Find(u => u.Username.Trim().ToLower() == username.Trim().ToLower()).FirstOrDefaultAsync();
             }
             catch (Exception ex)
             {

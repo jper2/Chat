@@ -3,6 +3,7 @@ using Chat.Core.Models;
 using Chat.Core.Repositories;
 using Chat.Core.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+//using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using MongoDB.Driver;
@@ -39,11 +40,11 @@ builder.Services.AddSingleton<IMongoClient, MongoClient>(sp =>
     var settings = sp.GetRequiredService<IOptions<MongoDbSettings>>().Value;
     return new MongoClient(settings.ConnectionString);
 });
-
-
-builder.Services.AddScoped<IMessageRepository, MongoMessageRepository>();
-builder.Services.AddScoped<IAuthRepository, MongoAuthRepository>();
-builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddSignalR();
+builder.Services.AddScoped<IMessageRepository, MongoDBMessageRepository>();
+builder.Services.AddScoped<IUsersRepository, MongoDBUsersRepository>();
+builder.Services.AddScoped<IUsersService, UsersService>();
+builder.Services.AddScoped<IMessageService, MessageService>();
 
 // JWT Settings Configuration
 builder.Services.Configure<JwtSettings>(
@@ -76,7 +77,7 @@ builder.Services.AddAuthorization();
 
 builder.Services.AddAuthorization();
 
-// Add CORS policy to allow all origins
+// Add CORS policy to allow all origins - dev only
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
@@ -86,8 +87,21 @@ builder.Services.AddCors(options =>
               .AllowAnyHeader();
     });
 });
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowSpecificOrigin", policy =>
+    {
+        policy.WithOrigins("http://localhost:5173") // Replace with your frontend's URL
+              .AllowAnyMethod()
+              .AllowAnyHeader()
+              .AllowCredentials(); // Allow credentials (e.g., cookies, authorization headers)
+    });
+});
+
 
 var app = builder.Build();
+
+app.MapHub<Chat.Core.Hubs.ChatHub>("/hubs/chat");
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -96,13 +110,24 @@ if (app.Environment.IsDevelopment())
 }
 
 // Enable CORS
+app.UseCors("AllowSpecificOrigin");
 app.UseCors("AllowAll");
-//app.UseMiddleware<ErrorHandlingMiddleware>();
+
+app.UseMiddleware<ErrorHandlingMiddleware>();
 
 app.UseHttpsRedirection();
 
+app.UseRouting();
+
 app.UseAuthentication();
 app.UseAuthorization();
+
+
+//app.UseEndpoints(endpoints =>
+//{
+//    endpoints.MapHub<Chat.Core.Hubs.ChatHub>("/hubs/chat");
+//    endpoints.MapControllers();
+//});
 
 app.MapControllers();
 

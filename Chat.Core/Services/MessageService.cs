@@ -1,5 +1,7 @@
-﻿using Chat.Core.Models;
+﻿using Chat.Core.Hubs;
+using Chat.Core.Models;
 using Chat.Core.Repositories;
+using Microsoft.AspNetCore.SignalR;
 
 namespace Chat.Core.Services
 {
@@ -7,10 +9,12 @@ namespace Chat.Core.Services
     public class MessageService : IMessageService
     {
         private readonly IMessageRepository _messageRepository;
+        private readonly IHubContext<ChatHub> _hubContext;
 
-        public MessageService(IMessageRepository messageRepository)
+        public MessageService(IMessageRepository messageRepository, IHubContext<ChatHub> hubContext)
         {
             _messageRepository = messageRepository;
+            _hubContext = hubContext;
         }
 
         public async Task<IEnumerable<Message>> GetAllAsync()
@@ -35,6 +39,10 @@ namespace Chat.Core.Services
             };
 
             await _messageRepository.CreateAsync(message);
+            if (!string.IsNullOrEmpty(message.Id))
+            {
+                await _hubContext.Clients.All.SendAsync("MessageAdded", message);
+            }
             return message;
         }
 
@@ -47,8 +55,13 @@ namespace Chat.Core.Services
             }
 
             await _messageRepository.DeleteAsync(id);
+
+            // Broadcast the deletion event to all connected clients
+            await _hubContext.Clients.All.SendAsync("MessageDeleted", id);
+
             return new AuthResult { Success = true, Message = "Message deleted successfully." };
         }
+
     }
 
 }

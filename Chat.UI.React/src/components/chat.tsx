@@ -1,42 +1,101 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import MessageList from './MessageList';
 import MessageInput from './MessageInput';
-import { mockMessages } from '../data/mockMessages';
 import { Message } from '../types/Message';
 import { MessagesService } from '../services/MessagesService';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import * as signalR from '@microsoft/signalr';
+import { mockMessages } from '../data/mockMessages';
 
 const Chat = () => {
   const [messages, setMessages] = useState<Message[]>(mockMessages);
+  const connectionRef = useRef<signalR.HubConnection | null>(null);
   const messagesService = MessagesService.getInstance();
+  const baseURL = import.meta.env.VITE_API_BASE_URL;
 
+  // Fetch messages on mount
   useEffect(() => {
-    messagesService.fetchMessages().then((fetchedMessages) => {
-      setMessages(fetchedMessages);
-    });
+    const fetchMessages = async () => {
+      try {
+        // const fetched = await messagesService.fetchMessages();
+        // setMessages(fetched);
+        const fetchedMessages = await messagesService.fetchMessages();
+        setMessages((prevMessages) => [...prevMessages, ...fetchedMessages]); // Append fetched messages
+      } catch (error) {
+        console.error('Failed to fetch messages:', error);
+        if (!toast.isActive('fetchError')) {
+          toast.error('Failed to load messages. Please try again later.', {
+            toastId: 'fetchError',
+          });
+        }
+      }
+    };
+
+    fetchMessages();
   }, []);
 
-  const handleSendMessage = async (content: string) => {
+  // Setup SignalR
+  useEffect(() => {
+    const connection = new signalR.HubConnectionBuilder()
+      .withUrl(`${baseURL}/hubs/chat`, {
+        withCredentials: true, // Include credentials in the request
+      })
+      .withAutomaticReconnect()
+      .build();
+
+    connection
+      .start()
+      .then(() => {
+        console.log('Connected to SignalR hub');
+
+        // Listen for the "MessageAdded" event
+        connection.on('MessageAdded', (newMessage: Message) => {
+          setMessages((prev) => [...prev, newMessage]);
+        });
+
+        // Listen for the "MessageDeleted" event
+        connection.on('MessageDeleted', (deletedMessageId: string) => {
+          setMessages((prev) => prev.filter((msg) => msg.id !== deletedMessageId));
+        });
+      })
+      .catch((err) => {
+        console.error('SignalR connection error:', err);
+        if (!toast.isActive('signalRError')) {
+          toast.error('Failed to connect to the chat server.', {
+            toastId: 'signalRError',
+          });
+        }
+      });
+
+    connectionRef.current = connection;
+
+    return () => {
+      connection.off('MessageAdded');
+      connection.off('MessageDeleted');
+      connection.stop();
+    };
+  }, [baseURL]);
+
+  const handleSendMessage = useCallback(async (content: string) => {
     const newMessage: Message = {
-      id: `${messages.length + 1}`,
       type: 'text',
       content,
-      isMine: true,
+      id:'',
+      userId: '21', // Ensure this is set to the current user's ID
+      metadata: {}, // Default to an empty object if not provided
     };
+
     try {
-      // Send the message to the API
-      const savedMessage = await messagesService.addMessage(newMessage);
-
-      // Update the local state with the saved message from the API
-      setMessages([...messages, savedMessage]);
+      await messagesService.addMessage(newMessage); // Message will come back via SignalR
     } catch (error) {
-      alert('Failed to send message. Please try again.');
+      toast.error('Failed to send message. Please try again.');
     }
-  };
+  }, []);
 
-  const handleDeleteMessage = (id: string) => {
-    setMessages((prevMessages) => prevMessages.filter((msg) => msg.id !== id));
-  };
-  
+  const handleDeleteMessage = useCallback((id: string) => {
+    setMessages((prev) => prev.filter((msg) => msg.id !== id));
+  }, []);
 
   return (
     <div className="min-h-screen flex flex-col items-center px-4 py-6">
@@ -47,6 +106,7 @@ const Chat = () => {
           <MessageInput onSend={handleSendMessage} />
         </div>
       </div>
+      <ToastContainer position="bottom-right" autoClose={3000} />
     </div>
   );
 };

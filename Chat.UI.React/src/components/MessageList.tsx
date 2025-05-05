@@ -8,6 +8,8 @@ import { useEffect, useRef } from 'react';
 // import { Trash2 } from 'lucide-react';
 import { MessagesService } from '../services/MessagesService';
 import { useAuth } from './context/AuthContext';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 interface Props {
   messages: Message[];
@@ -19,7 +21,6 @@ const MessageList: React.FC<Props> = ({ messages, onDeleteMessage }) => {
   const { currentUserId } = useAuth();
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-    console.log('currentUserId: ' + currentUserId);
   }, [messages]);
 
   const handleDelete = async (id: string) => {
@@ -28,22 +29,22 @@ const MessageList: React.FC<Props> = ({ messages, onDeleteMessage }) => {
       await messagesService.deleteMessage(id); // Call the deleteMessage function
       onDeleteMessage(id); // Notify parent component to update the message list
     } catch (error) {
-      console.error('Failed to delete message:', error);
+      toast.error('Failed to delete message. Please try again.');
     }
   };
 
   return (
     <div className="message-list">
       {messages.map((msg) => (
-        console.log('Message:', msg), // Debugging
         <div key={msg.id} className="message-item">
         {(() => {
           switch (msg.type) {
             case 'text':
               return (
                 <TextMessage
+                  id={msg.id}
                   content={msg.content}
-                  isOwner={msg.userId === currentUserId}
+                  createdByCurrentUser={msg.userId === currentUserId}
                   onDelete={() => handleDelete(msg.id)}
                 />
               );
@@ -74,33 +75,9 @@ const MessageList: React.FC<Props> = ({ messages, onDeleteMessage }) => {
           }
         })()}
       </div>
-        // <div key={msg.id} className="message-item">
-        //   {(() => {
-        //     switch (msg.type) {
-        //       case 'text':
-        //         return <TextMessage content={msg.content} isMine={msg.userId == '1'} onDelete={() => handleDelete(msg.id) />;
-        //       case 'image':
-        //         return <ImageMessage url={msg.content} />;
-        //       case 'chart':
-        //         return <ChartMessage data={msg.content} metadata={msg.metadata} />;
-        //       case 'table':
-        //         return <TableMessage markdown={msg.content} />;
-        //       default:
-        //         return null;
-        //     }
-        //   })()}
-        //   {/* <button
-        //     className="delete-button"
-        //     onClick={() => handleDelete(msg.id)}
-        //     aria-label="Delete message"
-        //   >
-        //     <FaTrash />
-        //   </button> */}
-         
-      
-        // </div>
       ))}
       <div ref={bottomRef} />
+      <ToastContainer position="bottom-right" autoClose={3000} />
     </div>
   );
 };
