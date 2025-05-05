@@ -3,7 +3,6 @@ using Chat.Core.Models;
 using Chat.Core.Repositories;
 using Chat.Core.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-//using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using MongoDB.Driver;
@@ -12,27 +11,33 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Configure Serilog
+// ==================================================
+// 1. Configure Logging
+// ==================================================
 Log.Logger = new LoggerConfiguration()
     .ReadFrom.Configuration(builder.Configuration)
     .Enrich.FromLogContext()
-    .WriteTo.Console() 
-    .WriteTo.File("Logs/log-.txt", rollingInterval: RollingInterval.Day)
+    .WriteTo.Console()
+    .WriteTo.File("Logs/log-.txt", rollingInterval: RollingInterval.Day, fileSizeLimitBytes: 20_971_520, rollOnFileSizeLimit: true, retainedFileCountLimit: 30)
     .CreateLogger();
 
 builder.Host.UseSerilog();
 Log.Information("Starting Chat API...");
-// Add services to the container.
 
+// ==================================================
+// 2. Configure Services
+// ==================================================
+
+// Add Controllers
 builder.Services.AddControllers();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+
+// Add OpenAPI/Swagger for API documentation
 builder.Services.AddOpenApi();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// MongoDB Configuration
-builder.Services.Configure<MongoDbSettings>(
-    builder.Configuration.GetSection("MongoDb"));
+// Configure MongoDB
+builder.Services.Configure<MongoDbSettings>(builder.Configuration.GetSection("MongoDb"));
 builder.Services.AddSingleton<IMongoDbSettings>(sp =>
     sp.GetRequiredService<IOptions<MongoDbSettings>>().Value);
 builder.Services.AddSingleton<IMongoClient, MongoClient>(sp =>
@@ -40,24 +45,26 @@ builder.Services.AddSingleton<IMongoClient, MongoClient>(sp =>
     var settings = sp.GetRequiredService<IOptions<MongoDbSettings>>().Value;
     return new MongoClient(settings.ConnectionString);
 });
+
+// Add SignalR for real-time communication
 builder.Services.AddSignalR();
+
+// Register Repositories
 builder.Services.AddScoped<IMessageRepository, MongoDBMessageRepository>();
 builder.Services.AddScoped<IUsersRepository, MongoDBUsersRepository>();
+
+// Register Services
 builder.Services.AddScoped<IUsersService, UsersService>();
 builder.Services.AddScoped<IMessageService, MessageService>();
 
-// JWT Settings Configuration
-builder.Services.Configure<JwtSettings>(
-    builder.Configuration.GetSection("Jwt"));
-
-// Validate JwtSettings during startup
+// Configure JWT Authentication
+builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("Jwt"));
 var jwtSettings = builder.Configuration.GetSection("Jwt").Get<JwtSettings>();
 if (jwtSettings == null || string.IsNullOrEmpty(jwtSettings.Key) || string.IsNullOrEmpty(jwtSettings.Issuer) || string.IsNullOrEmpty(jwtSettings.Audience))
 {
     throw new InvalidOperationException("JWT settings are not configured properly in the appsettings.");
 }
 
-// JWT Authentication Configuration
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -73,20 +80,10 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
+// Add Authorization
 builder.Services.AddAuthorization();
 
-builder.Services.AddAuthorization();
-
-// Add CORS policy to allow all origins - dev only
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowAll", policy =>
-    {
-        policy.AllowAnyOrigin()
-              .AllowAnyMethod()
-              .AllowAnyHeader();
-    });
-});
+// Configure CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowSpecificOrigin", policy =>
@@ -94,16 +91,20 @@ builder.Services.AddCors(options =>
         policy.WithOrigins("http://localhost:5173") // Replace with your frontend's URL
               .AllowAnyMethod()
               .AllowAnyHeader()
-              .AllowCredentials(); // Allow credentials (e.g., cookies, authorization headers)
+              .AllowCredentials();
     });
 });
 
-
+// ==================================================
+// 3. Build the Application
+// ==================================================
 var app = builder.Build();
 
-app.MapHub<Chat.Core.Hubs.ChatHub>("/hubs/chat");
+// ==================================================
+// 4. Configure Middleware
+// ==================================================
 
-// Configure the HTTP request pipeline.
+// Enable OpenAPI/Swagger in Development
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
@@ -111,24 +112,31 @@ if (app.Environment.IsDevelopment())
 
 // Enable CORS
 app.UseCors("AllowSpecificOrigin");
-app.UseCors("AllowAll");
 
+// Add custom error handling middleware
 app.UseMiddleware<ErrorHandlingMiddleware>();
 
+// Enable HTTPS redirection
 app.UseHttpsRedirection();
 
+// Add routing middleware
 app.UseRouting();
 
+// Add authentication and authorization middleware
 app.UseAuthentication();
 app.UseAuthorization();
 
+// ==================================================
+// 5. Map Endpoints
+// ==================================================
 
-//app.UseEndpoints(endpoints =>
-//{
-//    endpoints.MapHub<Chat.Core.Hubs.ChatHub>("/hubs/chat");
-//    endpoints.MapControllers();
-//});
+// Map SignalR hubs
+app.MapHub<Chat.Core.Hubs.ChatHub>("/hubs/chat");
 
+// Map API controllers
 app.MapControllers();
 
+// ==================================================
+// 6. Run the Application
+// ==================================================
 app.Run();

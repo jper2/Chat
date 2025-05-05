@@ -8,7 +8,7 @@ namespace Chat.Core.Services
         Task<IEnumerable<Message>> GetAllAsync();
         Task<Message> GetByIdAsync(string id);
         Task<Message> CreateAsync(MessageCreateDto messageCreateDto);
-        Task<AuthResult> DeleteAsync(string id);
+        Task<bool> DeleteAsync(string id);
     }
 
 }
