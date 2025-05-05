@@ -1,6 +1,6 @@
 ---
 
-### **Chat - Demo**
+# Chat - Demo
 
 
 ```markdown
@@ -85,7 +85,7 @@ The API will be available at `https://localhost:7117` (or the port specified in 
 Navigate to the frontend directory (if applicable) and install dependencies:
 
 ```
-cd Chat.UI
+cd Chat.UI.React
 npm install
 
 ```
