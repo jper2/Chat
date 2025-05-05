@@ -21,7 +21,6 @@ Before running the application, ensure you have the following installed:
 - [.NET 9 SDK](https://dotnet.microsoft.com/download/dotnet/9.0)
 - [Node.js (v18 or later)](https://nodejs.org/)
 - [MongoDB](https://www.mongodb.com/try/download/community)
-- [Docker (optional)](https://www.docker.com/)
 
 ---
 
