@@ -123,22 +123,6 @@ The frontend will be available at `http://localhost:5173`.
 
 ---
 
-### **5. Run with Docker (Optional)**
-
-#### **5.1. Build and Run Containers**
-Use Docker Compose to run the backend and MongoDB:
-
-```
-docker-compose up --build
-
-```
-
-#### **5.2. Access the Application**
-- Backend: `http://localhost:5000`
-- Frontend: `http://localhost:5173`
-
----
-
 ## **Testing**
 
 ### **Unit Tests**
@@ -160,17 +144,3 @@ dotnet test
 
 ---
 
-## **Contributing**
-Contributions are welcome! Please fork the repository and submit a pull request.
-
----
-
-## **License**
-This project is licensed under the MIT License.
-
----
-
-
-```
-
----
