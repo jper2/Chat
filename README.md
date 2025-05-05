@@ -148,3 +148,56 @@ dotnet test
 
 ---
 
+## **Project Structure**
+- **Chat.API**: Backend API built with .NET 9.
+- **Chat.Core**: Core library containing models, services, and utilities.
+- **Chat.UI**: React frontend for the chat application.
+- **Chat.Tests**: Unit tests for the backend.
+
+---
+
+## **Functional Description**
+
+This chat application provides the following functionalities for users:
+
+### **1. Real-Time Messaging**
+- Users can send and receive messages in real-time using SignalR.
+- Messages are updated dynamically without requiring a page refresh.
+
+### **2. Message Types**
+The application supports multiple types of messages:
+- **Text Messages**: Users can send and view plain text messages.
+- **Image Messages**: Users can share image URLs, which are displayed as images in the chat.
+- **Chart Messages**: Users can send chart data, which is rendered as visual charts.
+- **Table Messages**: Users can send markdown-formatted tables, which are displayed as structured tables.
+
+### **3. Message Management**
+- **Add Messages**: Users can add new messages to the chat.
+- **Delete Messages**: Users can delete their own messages. Deleted messages are removed from the chat in real-time.
+
+### **4. Authentication**
+- Users must log in to access the chat.
+- The application uses JWT-based authentication to identify users.
+- Logged-in users can see their username displayed in the navigation bar.
+
+### **5. Notifications**
+The application provides toast notifications for various events:
+- **Error Notifications**: Displayed when an action (e.g., deleting a message) fails.
+- **Reconnection Notifications**: Displayed when the application attempts to reconnect to the chat server.
+
+### **6. Smooth Scrolling**
+- The chat automatically scrolls to the latest message when new messages are added.
+
+### **7. Responsive Design**
+- The application is designed to work seamlessly on both desktop and mobile devices.
+
+---
+
+## **Technical Features**
+- **Frontend**: Built with React and TypeScript.
+- **Real-Time Communication**: Powered by SignalR for real-time updates.
+- **State Management**: Uses React's `useState` and `useEffect` hooks for managing state and side effects.
+- **Authentication**: JWT-based authentication with user context (`AuthContext`).
+- **Error Handling**: Provides user-friendly error messages using `react-toastify`.
+
+---
