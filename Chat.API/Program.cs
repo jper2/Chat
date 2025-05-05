@@ -89,7 +89,10 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowSpecificOrigin", policy =>
     {
-        policy.WithOrigins("http://localhost:5173") // Replace with your frontend's URL
+        // Fix for CS8600: Ensure the value retrieved from the configuration is not null by providing a fallback or throwing an exception if null.
+        string frontendUrl = builder.Configuration.GetValue<string>("FrontendUrl")
+            ?? throw new InvalidOperationException("Frontend URL is not configured in appsettings.json.");
+        policy.WithOrigins(frontendUrl)
               .AllowAnyMethod()
               .AllowAnyHeader()
               .AllowCredentials();

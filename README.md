@@ -103,7 +103,12 @@ Start the React development server:
 npm run dev
 
 ```
-The frontend will be available at `http://localhost:5173`.
+The frontend will be available at `http://localhost:5173`. If you are using a different URL, make sure to update the `FrontendUrl` setting in `Chat.API/appsettings.json` with the new address."
+
+```
+"FrontendUrl": "http://localhost:5173",
+
+```
 
 ---
 
